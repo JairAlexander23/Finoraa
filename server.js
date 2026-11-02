@@ -62,7 +62,6 @@ CREATE TABLE IF NOT EXISTS password_resets (
   expires_at INTEGER NOT NULL
 );`);
 const q = {
-  byEmail: db.prepare('SELECT * FROM users WHERE email = ?'),
   byId: db.prepare('SELECT id,email,nombre,apellido,email_verified,auth_version FROM users WHERE id = ?'),
   insert: db.prepare('INSERT INTO users (email,nombre,apellido,password_hash,email_verified) VALUES (?,?,?,?,0)'),
   getState: db.prepare('SELECT state_json FROM user_state WHERE user_id = ?'),
@@ -80,6 +79,16 @@ const q = {
   delReset: db.prepare('DELETE FROM password_resets WHERE user_id=?'),
   changePassword: db.prepare('UPDATE users SET password_hash=?,auth_version=auth_version+1 WHERE id=?'),
 };
+// Keep the email lookup short-lived. A stale/finalized cached StatementSync
+// caused registration requests to fail on the hosted Node runtime.
+function getUserByEmail(email) {
+  const statement = db.prepare('SELECT * FROM users WHERE email = ?');
+  try {
+    return statement.get(email);
+  } finally {
+    statement[Symbol.dispose]();
+  }
+}
 
 /* ---------- App ---------- */
 const app = express();
@@ -161,7 +170,7 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo electrónico válido.' });
     if (password.length < 8 || Buffer.byteLength(password) > 72)
       return res.status(400).json({ error: 'La contraseña debe tener entre 8 y 72 caracteres.' });
-    let user = q.byEmail.get(email);
+    let user = getUserByEmail(email);
     if (user?.email_verified) return res.status(409).json({ error: 'Ya existe una cuenta verificada con ese correo.' });
     if (!user) {
       const hash = await bcrypt.hash(password, 12);
@@ -199,7 +208,7 @@ app.post('/api/password/forgot', authLimiter, async (req, res) => {
   const email = clean(req.body.email, 120).toLowerCase();
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo electrónico válido.' });
   if (!RESEND_API_KEY || !EMAIL_FROM) return res.status(503).json({ error: 'La recuperación por correo aún no está configurada.' });
-  const user = q.byEmail.get(email);
+  const user = getUserByEmail(email);
   if (user?.email_verified) {
     try {
       const token = makeToken();
@@ -236,7 +245,7 @@ app.post('/api/password/change', auth, async (req, res, next) => {
     const current = String(req.body.currentPassword || '');
     const password = String(req.body.password || '');
     if (password.length < 8 || Buffer.byteLength(password) > 72) return res.status(400).json({ error: 'La nueva contraseña debe tener entre 8 y 72 caracteres.' });
-    const row = q.byEmail.get(req.user.email);
+    const row = getUserByEmail(req.user.email);
     if (!(await bcrypt.compare(current, row.password_hash))) return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
     if (await bcrypt.compare(password, row.password_hash)) return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual.' });
     const hash = await bcrypt.hash(password, 12);
@@ -251,7 +260,7 @@ app.post('/api/login', authLimiter, async (req, res, next) => {
   try {
     const email = clean(req.body.email, 120).toLowerCase();
     const password = String(req.body.password ?? '');
-    const row = q.byEmail.get(email);
+    const row = getUserByEmail(email);
     const ok = await bcrypt.compare(password, row ? row.password_hash : DUMMY_HASH);
     if (!row || !ok) return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
     if (!row.email_verified) return res.status(403).json({ error: 'Debes verificar tu correo con el enlace que enviamos antes de iniciar sesión.' });
@@ -315,7 +324,7 @@ app.put('/api/state', auth, (req, res) => {
 });
 app.delete('/api/account', auth, async (req, res, next) => {   // borrar cuenta y todos sus datos
   try {
-    const row = q.byEmail.get(req.user.email);
+    const row = getUserByEmail(req.user.email);
     if (!(await bcrypt.compare(String(req.body.password ?? ''), row.password_hash)))
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     q.delUser.run(req.user.id);
