@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo"><svg width="30" height="30" viewBox="0 0 32 32"><defs><linearGradient id="flogoAuth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#4f3ff0"/></linearGradient></defs><rect width="32" height="32" rx="10" fill="url(#flogoAuth)"/><rect x="9" y="7" width="5" height="18" rx="2.5" fill="#fff"/><rect x="9" y="7" width="14" height="5" rx="2.5" fill="#fff"/><rect x="9" y="15" width="11" height="5" rx="2.5" fill="#fff"/></svg>Finora</div>
+
+    <div class="auth-view active" id="auth-login">
+      <h2>Iniciar sesión</h2>
+      <label>Correo electrónico</label><input id="login-email" type="email" placeholder="tu@correo.com">
+      <label>Contraseña</label><input id="login-pass" type="password" placeholder="••••••••">
+      <p class="auth-error" id="login-error" style="display:none;"></p>
+      <button class="btn full" style="margin-top:16px;" id="login-submit" onclick="hacerLogin()">Iniciar sesión</button>
+      <p class="auth-switch">¿No tienes cuenta? <a onclick="mostrarAuth('register')">Regístrate</a></p>
+      <p class="auth-switch auth-switch-tight"><a onclick="mostrarAuth('forgot')">¿Olvidaste tu contraseña?</a></p>
+    </div>
+
+    <div class="auth-view" id="auth-register">
+      <h2>Crear cuenta</h2>
+      <label>Nombre</label><input id="reg-nombre" placeholder="Juan">
+      <label>Apellido</label><input id="reg-apellido" placeholder="Pérez">
+      <label>Correo electrónico</label><input id="reg-email" type="email" placeholder="tu@correo.com">
+      <label>Contraseña</label><input id="reg-pass" type="password" placeholder="••••••••">
+      <label>Confirmar contraseña</label><input id="reg-pass2" type="password" placeholder="••••••••">
+      <p class="auth-error" id="reg-error" style="display:none;"></p>
+      <button class="btn full" style="margin-top:16px;" id="reg-submit" onclick="hacerRegistro()">Crear cuenta</button>
+      <p class="auth-switch">¿Ya tienes cuenta? <a onclick="mostrarAuth('login')">Inicia sesión</a></p>
+    </div>
+
+    <div class="auth-view" id="auth-success" style="text-align:center;">
+      <div class="auth-success-icon">✉️</div>
+      <h2>Revisa tu correo</h2>
+      <p class="muted">Te enviamos un enlace para verificar tu cuenta. Cuando lo abras, podrás iniciar sesión.</p>
+      <button class="btn full" style="margin-top:10px;" onclick="mostrarAuth('login')">Ir a iniciar sesión</button>
+    </div>
+
+    <div class="auth-view" id="auth-forgot">
+      <h2>Recuperar contraseña</h2>
+      <p class="muted auth-description">Escribe el correo verificado de tu cuenta y te enviaremos un enlace.</p>
+      <label>Correo electrónico</label><input id="forgot-email" type="email" autocomplete="email" placeholder="tu@correo.com">
+      <p class="auth-error" id="forgot-error" style="display:none;"></p>
+      <button class="btn full" style="margin-top:16px;" id="forgot-submit" onclick="solicitarRecuperacion()">Enviar enlace</button>
+      <p class="auth-switch"><a onclick="mostrarAuth('login')">Volver a iniciar sesión</a></p>
+    </div>
+
+    <div class="auth-view" id="auth-reset">
+      <h2>Nueva contraseña</h2>
+      <p class="muted auth-description">Crea una contraseña nueva para tu cuenta.</p>
+      <label>Nueva contraseña</label><input id="reset-pass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+      <label>Repite la contraseña</label><input id="reset-pass2" type="password" autocomplete="new-password" placeholder="Escríbela nuevamente">
+      <p class="auth-error" id="reset-error" style="display:none;"></p>
+      <button class="btn full" style="margin-top:16px;" id="reset-submit" onclick="restablecerPassword()">Guardar contraseña</button>
+      <p class="auth-switch"><a onclick="mostrarAuth('login')">Volver a iniciar sesión</a></p>
+    </div>
+
+    <div class="auth-view" id="auth-reset-success" style="text-align:center;">
+      <div class="auth-success-icon">✓</div>
+      <h2>Contraseña actualizada</h2>
+      <p class="muted">Los cambios se guardaron correctamente. Ya puedes iniciar sesión.</p>
+      <button class="btn full" style="margin-top:10px;" onclick="mostrarAuth('login')">Volver al inicio de sesión</button>
+    </div>
+
+    <div class="auth-view" id="auth-verified" style="text-align:center;">
+      <div class="auth-success-icon">✓</div>
+      <h2>Correo verificado</h2>
+      <p class="muted">Tu cuenta está lista. Ya puedes iniciar sesión en Finora.</p>
+      <button class="btn full" style="margin-top:10px;" onclick="mostrarAuth('login')">Iniciar sesión</button>
+    </div>
+
+    <div class="auth-view" id="auth-link-error" style="text-align:center;">
+      <div class="auth-success-icon auth-error-icon">!</div>
+      <h2>Enlace vencido o inválido</h2>
+      <p class="muted">Solicita un nuevo enlace e inténtalo nuevamente.</p>
+      <button class="btn full" style="margin-top:10px;" onclick="mostrarAuth('login')">Volver al inicio de sesión</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app-root" style="display:none;">
+  <aside class="sidebar" id="sidebar">
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;">
+        <div class="brand" onclick="goTo('inicio')" title="Ir a Inicio"><svg width="26" height="26" viewBox="0 0 32 32"><defs><linearGradient id="flogoTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#4f3ff0"/></linearGradient></defs><rect width="32" height="32" rx="10" fill="url(#flogoTop)"/><rect x="9" y="7" width="5" height="18" rx="2.5" fill="#fff"/><rect x="9" y="7" width="14" height="5" rx="2.5" fill="#fff"/><rect x="9" y="15" width="11" height="5" rx="2.5" fill="#fff"/></svg><span>Finora</span></div>
+        <div class="search">
+          <span>🔍</span><input id="global-search" placeholder="Buscar en Finora..." oninput="globalSearch()">
+          <div class="dropdown" id="search-dropdown"></div>
+        </div>
+      </div>
+      <div class="top-right">
+        <button class="topbar-btn" id="moneda-badge" onclick="goTo('configuracion')" title="Cambiar moneda">💱 COP</button>
+        <div class="bell-wrap">
+          <button class="bell" id="bell-btn" onclick="toggleDropdown('notif')">🔔<span class="bell-dot" id="bell-dot" style="display:none;"></span></button>
+          <div class="dropdown notif-panel" id="notif-dropdown">
+            <div class="dropdown-head">Notificaciones</div>
+            <div id="notif-list"></div>
+          </div>
+        </div>
+        <div class="user-wrap">
+          <button class="user" id="user-btn" onclick="toggleDropdown('user')"><div class="avatar" id="avatar-ini">JP</div><span id="user-nombre-top">Juan Pérez</span> ▾</button>
+          <div class="dropdown" id="user-dropdown">
+            <div class="dropdown-head">Juan Pérez</div>
+            <div class="dropdown-item" onclick="goTo('configuracion')">👤 Editar perfil</div>
+            <div class="dropdown-item" onclick="goTo('configuracion')">🔒 Seguridad y privacidad</div>
+            <div class="dropdown-item" onclick="goTo('configuracion')">⚙️ Configuración</div>
+            <div class="dropdown-item" onclick="cerrarSesion()">🚪 Cerrar sesión</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INICIO -->
+    <section class="view active" id="view-inicio">
+      <h1 id="inicio-saludo">¡Hola!</h1>
+      <p class="muted">Aquí tienes un resumen de tus finanzas. ¿Puedes gastar hoy sin arruinar tu fin de mes?</p>
+      <div class="grid grid-3">
+        <div class="card">
+          <span class="badge" id="badge-estado">✅ Estado financiero: Saludable</span>
+          <p class="muted" style="margin:0 0 2px;font-size:13px;">Saldo disponible libre</p>
+          <div class="saldo" id="saldo-mld">$0</div>
+          <p class="muted" style="margin:0;">Después de restar tus pagos fijos del mes</p>
+          <div class="tip" id="tip-inicio">💡 Calculando recomendación...</div>
+          <div class="tip" id="tip-perfil" style="display:none;margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <h3>Tus finanzas en resumen</h3>
+          <div class="resumen-list">
+            <div class="row"><span>Ingresos del mes</span><b class="mono" id="r-ingreso">$0</b></div>
+            <div class="row"><span>Pagos fijos</span><b class="mono" id="r-fijos">$0</b></div>
+            <div class="row"><span>Gastos realizados</span><b class="mono" id="r-gastos">$0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:18px;">
+        <div class="card">
+          <h3>Próximos pagos</h3>
+          <div id="pagos-list"></div>
+        </div>
+        <div class="card">
+          <h3>Meta de ahorro <span id="meta-pct-inicio" style="float:right;color:var(--teal-d);"></span></h3>
+          <p class="muted" style="margin:0 0 4px;font-size:13.5px;" id="meta-nombre-inicio"></p>
+          <div class="progress-wrap"><div class="progress-bar" id="meta-bar-inicio" style="width:0%"></div></div>
+          <p class="muted" style="margin:6px 0 0;font-size:13px;" id="meta-nums-inicio"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTRO -->
+    <section class="view" id="view-registro">
+      <h1>Registro Ágil</h1>
+      <p class="muted">Agrega tus ingresos y gastos en segundos.</p>
+      <div class="grid grid-3">
+        <div class="card">
+          <div style="display:flex;gap:12px;margin-bottom:18px;">
+            <button class="btn full" onclick="openModal('ingreso')">＋ Registrar Ingreso</button>
+            <button class="btn red full" onclick="openModal('gasto')">－ Registrar Gasto</button>
+          </div>
+          <h3>Movimientos recientes</h3>
+          <div id="registro-recientes"></div>
+
+          <h3 style="margin-top:24px;display:flex;justify-content:space-between;align-items:center;">Tus carpetas <button class="btn" style="padding:7px 14px;font-size:12.5px;" onclick="crearCarpetaUI()">＋ Nueva carpeta</button></h3>
+          <div class="carpetas-grid" id="carpetas-grid"></div>
+        </div>
+        <div class="card">
+          <div class="tip">💡 <span>Mantén tus registros al día para que las proyecciones sean más precisas.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIMULADOR -->
+    <section class="view" id="view-simulador">
+      <h1>Simulador Predictivo</h1>
+      <p class="muted">Visualiza el impacto de tus gastos antes de realizarlos.</p>
+      <div class="card">
+        <div class="sim-row">
+          <div class="sim-input"><label>¿Qué quieres comprar?</label><input id="sim-concepto" placeholder="Ej. Zapatillas, Viaje, Laptop..."></div>
+          <div class="sim-input" style="max-width:160px;"><label>Monto</label><input id="sim-monto" type="number" placeholder="0"></div>
+        </div>
+        <button class="btn" onclick="simular()">⇄ Simular</button>
+        <p id="sim-error" style="color:var(--red);font-size:12.5px;margin:8px 0 0;display:none;"></p>
+        <div id="sim-resultado"></div>
+      </div>
+
+      <div class="card" id="sim-insights" style="margin-top:18px;"></div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="view" id="view-historial">
+      <h1>Historial de Transacciones</h1>
+      <p class="muted">Revisa todos tus movimientos y mantén el control de tu dinero.</p>
+      <div class="card">
+        <div class="filters">
+          <select id="f-cat"><option value="">Todas las categorías</option></select>
+          <input id="f-search" placeholder="🔍 Buscar por concepto...">
+        </div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Carpeta</th><th>Tipo</th><th style="text-align:right;">Monto</th><th></th></tr></thead>
+          <tbody id="historial-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- METAS -->
+    <section class="view" id="view-metas">
+      <h1>Mis Metas <button class="btn" style="float:right;" onclick="openModal('meta')">＋ Nueva meta</button></h1>
+      <p class="muted">Define tus objetivos y haz seguimiento de tu progreso.</p>
+      <div class="grid grid-3" style="grid-template-columns:1fr 1fr;" id="metas-grid"></div>
+    </section>
+
+    <!-- ALERTAS -->
+    <section class="view" id="view-alertas">
+      <h1>Sistema de Alertas</h1>
+      <p class="muted">Recibe notificaciones y mantén tu salud financiera bajo control.</p>
+      <div class="card" id="alert-banner" style="margin-bottom:18px;"></div>
+      <p class="muted" style="font-size:12.5px;margin:-8px 0 14px;">📎 Los rangos del semáforo (Verde &gt;50%, Amarillo 20-50%, Rojo &lt;20% del ingreso libre) se basan en la regla de presupuesto 50/30/20.</p>
+      <div class="alert-tabs" id="alert-tabs"></div>
+      <div class="card" id="alert-list"></div>
+    </section>
+
+    <!-- ASISTENTE -->
+    <section class="view" id="view-asistente">
+      <h1>Finora 🤖</h1>
+      <p class="muted">Pregúntame lo que quieras sobre tu dinero o pídeme que haga cosas por ti: crear metas, registrar gastos e ingresos, abonar a una meta, cambiar la moneda...</p>
+      <div class="card">
+        <div class="chat-tools">
+          <p id="ia-note">Conectando con la IA…</p>
+          <button class="btn ghost" style="padding:7px 12px;font-size:12px;white-space:nowrap;" onclick="nuevaConversacion()">🗑️ Nueva conversación</button>
+        </div>
+        <div class="suggest-row">
+          <button class="suggest-chip" onclick="chatSend('¿Cómo voy este mes?')">¿Cómo voy este mes?</button>
+          <button class="suggest-chip" onclick="chatSend('Dame un consejo para ahorrar más')">Un consejo para ahorrar</button>
+          <button class="suggest-chip" onclick="chatSend('¿Me conviene comprarme unos audífonos de 300 mil?')">¿Me conviene esta compra?</button>
+          <button class="suggest-chip" onclick="chatSend('Crea una meta: viaje a España, 5 millones en 12 meses')">Crear una meta</button>
+          <button class="suggest-chip" onclick="chatSend('Registra un gasto variable de 50 mil en comida')">Registrar un gasto</button>
+          <button class="suggest-chip" onclick="chatSend('Explícame la regla 50/30/20')">Regla 50/30/20</button>
+        </div>
+        <div class="chat-box">
+          <div class="chat-msgs" id="chat-msgs"></div>
+          <div class="chat-input-row">
+            <input id="chat-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter')chatSend()">
+            <button class="btn ghost" id="chat-stop" style="display:none;" onclick="chatStop()">Detener</button>
+            <button class="btn" id="chat-send" onclick="chatSend()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APRENDE -->
+    <section class="view" id="view-aprende">
+      <h1>Aprende 📚</h1>
+      <p class="muted">Recursos confiables para seguir mejorando tus finanzas, y respuestas rápidas a dudas comunes.</p>
+
+      <h3 style="margin:20px 0 4px;">Sitios confiables para seguir aprendiendo</h3>
+      <div class="learn-grid">
+        <a class="learn-card" href="https://www.banrep.gov.co/es/economia-ninos" target="_blank" rel="noopener">
+          <div class="learn-emoji">🏦</div><b>Banco de la República</b><p>Educación económica y financiera oficial de Colombia, con guías claras para cualquier nivel.</p>
+        </a>
+        <a class="learn-card" href="https://www.asobancaria.com/educacion-financiera/" target="_blank" rel="noopener">
+          <div class="learn-emoji">🎓</div><b>Asobancaria</b><p>Programas y artículos de educación financiera para el público colombiano.</p>
+        </a>
+        <a class="learn-card" href="https://www.consumerfinance.gov/es/" target="_blank" rel="noopener">
+          <div class="learn-emoji">🛡️</div><b>CFPB (en español)</b><p>Guías sobre presupuesto, crédito y ahorro de la oficina de protección financiera de EE. UU.</p>
+        </a>
+        <a class="learn-card" href="https://www.investopedia.com/" target="_blank" rel="noopener">
+          <div class="learn-emoji">📈</div><b>Investopedia</b><p>Referencia internacional para entender conceptos de finanzas e inversión (en inglés).</p>
+        </a>
+        <a class="learn-card" href="https://www.imf.org/es/News/finlit" target="_blank" rel="noopener">
+          <div class="learn-emoji">🌍</div><b>FMI — Educación financiera</b><p>Recursos del Fondo Monetario Internacional sobre alfabetización financiera.</p>
+        </a>
+        <a class="learn-card" href="https://www.khanacademy.org/economics-finance-domain/core-finance" target="_blank" rel="noopener">
+          <div class="learn-emoji">🧠</div><b>Khan Academy</b><p>Cursos gratuitos paso a paso sobre interés, deuda, inversión y más.</p>
+        </a>
+      </div>
+
+      <h3 style="margin:26px 0 4px;">Preguntas rápidas</h3>
+      <div id="faq-list" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- CONFIGURACIÓN -->
+    <section class="view" id="view-configuracion">
+      <h1>Configuración</h1>
+      <p class="muted">Administra tu información, seguridad y preferencias de la app.</p>
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>Información del usuario</h3>
+          <div class="avatar-upload-row">
+            <div class="avatar-big" id="cfg-avatar-preview">JP</div>
+            <div class="avatar-upload-actions">
+              <label class="btn ghost" style="padding:8px 14px;font-size:12.5px;" for="cfg-foto-input">📷 Cambiar foto</label>
+              <input type="file" id="cfg-foto-input" accept="image/*" onchange="handleFotoUpload(this)">
+              <button class="btn ghost" style="padding:8px 14px;font-size:12.5px;color:var(--red);" onclick="quitarFoto()">Quitar foto</button>
+            </div>
+          </div>
+          <div class="sim-input"><label>Nombre completo</label><input id="cfg-nombre" placeholder="Juan Pérez"></div>
+          <div class="sim-input"><label>Correo electrónico verificado</label><input id="cfg-email" placeholder="juan@correo.com" readonly aria-describedby="cfg-email-note"><small id="cfg-email-note" class="field-note">El correo de la cuenta no se puede cambiar desde aquí.</small></div>
+          <div class="sim-input"><label>Tu perfil</label>
+            <select id="cfg-tipo">
+              <option value="estudiante">🎓 Estudiante</option>
+              <option value="trabajador">💼 Trabajador</option>
+              <option value="ambos">🎓 Estudio y trabajo 💼</option>
+            </select>
+          </div>
+          <div class="sim-input"><label>País o región</label><select id="cfg-pais" onchange="cambiarPaisConfig()"></select></div>
+          <button class="btn" onclick="guardarPerfil()">Guardar cambios</button>
+          <p id="cfg-error" style="color:var(--red);font-size:12.5px;margin:8px 0 0;display:none;"></p>
+          <p id="cfg-ok" style="color:var(--teal-d);font-size:12.5px;margin:8px 0 0;display:none;">✅ Perfil actualizado.</p>
+
+          <div class="password-settings">
+            <h3>Cambiar contraseña</h3>
+            <div class="sim-input"><label>Contraseña actual</label><input id="cfg-current-pass" type="password" autocomplete="current-password"></div>
+            <div class="sim-input"><label>Nueva contraseña</label><input id="cfg-new-pass" type="password" autocomplete="new-password" minlength="8"></div>
+            <div class="sim-input"><label>Repite la nueva contraseña</label><input id="cfg-new-pass2" type="password" autocomplete="new-password" minlength="8"></div>
+            <p class="auth-error" id="cfg-pass-error" style="display:none;"></p>
+            <button class="btn ghost" onclick="cambiarPasswordDesdeConfig()">Actualizar contraseña</button>
+          </div>
+
+          <h3 style="margin-top:26px;">Seguridad y privacidad</h3>
+          <div class="setting-row"><div><b>Autenticación en dos pasos</b><p>Añade una capa extra de seguridad a tu cuenta.</p></div><label class="toggle"><input type="checkbox" id="cfg-2fa"><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>Notificaciones de alertas</b><p>Recibe avisos cuando tu saldo esté en riesgo.</p></div><label class="toggle"><input type="checkbox" id="cfg-notif" checked><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>Compartir datos con Finora</b><p>Usado solo para mejorar tus recomendaciones.</p></div><label class="toggle"><input type="checkbox" id="cfg-share" checked><span class="track"></span></label></div>
+
+          <h3 style="margin-top:26px;color:var(--red);">Zona de peligro</h3>
+          <p class="muted" style="font-size:12.5px;margin:0 0 12px;">Borra todos tus ingresos, gastos, carpetas, metas y alertas registrados en esta cuenta. Tu nombre, correo y perfil se conservan.</p>
+          <button class="btn red" onclick="restablecerCuenta()">🔄 Restablecer mis datos a cero</button>
+          <button class="btn red" style="margin-top:10px;" onclick="eliminarCuenta()">🗑️ Eliminar mi cuenta</button>
+        </div>
+        <div class="card">
+          <h3>Apariencia</h3>
+          <p class="muted" style="font-size:12.5px;margin:0 0 8px;">Color de acento</p>
+          <div class="accent-row" id="accent-row"></div>
+          <div class="setting-row"><div><b>Modo oscuro</b><p>Cambia la apariencia de toda la app.</p></div><label class="toggle"><input type="checkbox" id="cfg-dark" onchange="toggleDark()"><span class="track"></span></label></div>
+          <div class="tip" style="margin-top:16px;">💡 <span>Tus preferencias se guardan automáticamente en este dispositivo.</span></div>
+          <button class="btn ghost" style="margin-top:14px;" onclick="goTo('inicio');setTimeout(iniciarTour,300)">🧭 Ver la guía de la app de nuevo</button>
+        </div>
+        <div class="card">
+          <h3>Moneda</h3>
+          <div class="sim-input"><label>Moneda de la app</label><select id="cfg-moneda" onchange="cambiarMoneda()"></select></div>
+          <p class="muted" style="font-size:12px;margin-top:6px;">Al cambiar de moneda, todos tus montos ya registrados (ingresos, gastos, pagos fijos y metas) se convierten automáticamente en toda la app.</p>
+          <p class="muted" style="font-size:11px;margin-top:6px;">⚠️ Las tasas de cambio usadas son valores de referencia aproximados, no en tiempo real.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- RECORRIDO GUIADO -->
+<div id="tour-overlay">
+  <div id="tour-highlight"></div>
+  <div id="tour-tooltip"></div>
+</div>
+
+<!-- ASISTENTE FLOTANTE -->
+<div id="fab-assistant">
+  <div id="fab-panel">
+    <div class="fab-panel-head">
+      <span>🤓 Finora</span>
+      <div style="display:flex;gap:6px;">
+        <button class="fab-icon-btn" onclick="expandirFab()" title="Abrir pestaña completa">⤢</button>
+        <button class="fab-icon-btn" onclick="toggleFabChat()" title="Cerrar">✕</button>
+      </div>
+    </div>
+    <div class="fab-suggest-row" id="fab-suggest-row">
+      <button class="suggest-chip" onclick="chatSend('¿Cómo voy este mes?','fab')">¿Cómo voy este mes?</button>
+      <button class="suggest-chip" onclick="chatSend('Dame un consejo para ahorrar más','fab')">Un consejo para ahorrar</button>
+      <button class="suggest-chip" onclick="chatSend('¿Me conviene esta compra?','fab')">¿Me conviene esta compra?</button>
+      <button class="suggest-chip" onclick="chatSend('Crea una meta','fab')">Crear una meta</button>
+    </div>
+    <div class="fab-panel-body" id="fab-chat-msgs"></div>
+    <div class="fab-panel-input">
+      <input id="fab-chat-input" placeholder="Pregúntame algo..." onkeydown="if(event.key==='Enter')chatSend(null,'fab')">
+      <button onclick="chatSend(null,'fab')">➤</button>
+    </div>
+  </div>
+  <div id="fab-bubble-tip"></div>
+  <button id="fab-btn" onpointerdown="fabDragStart(event)" title="Finora, tu asistente — arrástrame">
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="fabFace" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dcfce8"/></linearGradient></defs>
+      <circle cx="24" cy="24" r="21" fill="url(#fabFace)"/>
+      <circle cx="24" cy="24" r="21" fill="none" stroke="#059669" stroke-width="2"/>
+      <circle cx="16" cy="23" r="6.2" fill="none" stroke="#17192b" stroke-width="2.4"/>
+      <circle cx="32" cy="23" r="6.2" fill="none" stroke="#17192b" stroke-width="2.4"/>
+      <line x1="22.2" y1="23" x2="25.8" y2="23" stroke="#17192b" stroke-width="2.4"/>
+      <circle cx="16" cy="23" r="2" fill="#17192b"/>
+      <circle cx="32" cy="23" r="2" fill="#17192b"/>
+      <path d="M16 33c3 4 13 4 16 0" fill="none" stroke="#17192b" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="20" stroke-dashoffset="20"><animate attributeName="stroke-dashoffset" from="20" to="0" dur=".6s" begin="0.2s" fill="freeze"/></path>
+      <path d="M38 8l1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3 3-1.3z" fill="#f5b301"/>
+    </svg>
+  </button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
