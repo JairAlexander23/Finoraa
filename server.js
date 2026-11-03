@@ -18,6 +18,7 @@ const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || '';
 const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/+$/, '');
+const REQUIRE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'finora.db');
 let SECRET = process.env.JWT_SECRET;
 if (!SECRET) {
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
 );`);
 const q = {
   byId: db.prepare('SELECT id,email,nombre,apellido,email_verified,auth_version FROM users WHERE id = ?'),
-  insert: db.prepare('INSERT INTO users (email,nombre,apellido,password_hash,email_verified) VALUES (?,?,?,?,0)'),
+  insert: db.prepare('INSERT INTO users (email,nombre,apellido,password_hash,email_verified) VALUES (?,?,?,?,?)'),
   getState: db.prepare('SELECT state_json FROM user_state WHERE user_id = ?'),
   putState: db.prepare(`INSERT INTO user_state (user_id,state_json,updated_at) VALUES (?,?,datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET state_json=excluded.state_json, updated_at=excluded.updated_at`),
@@ -176,7 +177,8 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
     if (!user) {
       const hash = await bcrypt.hash(password, 12);
       try {
-        const result = q.insert.run(email, nombre, apellido, hash);
+        const verified = REQUIRE_EMAIL_VERIFICATION ? 0 : 1;
+        const result = q.insert.run(email, nombre, apellido, hash, verified);
         user = q.byId.get(Number(result.lastInsertRowid));
       } catch (e) {
         if (e.errcode === 2067 || e.errcode === 1555 || /UNIQUE constraint failed/i.test(String(e.message)))
@@ -184,14 +186,19 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
         throw e;
       }
     }
-    try { await sendVerificationEmail(req, user); }
-    catch (e) {
-      const message = e.message === 'EMAIL_PROVIDER_NOT_CONFIGURED'
-        ? 'El envío de correo aún no está configurado. Configura RESEND_API_KEY y EMAIL_FROM en .env.'
-        : 'No se pudo enviar el correo de verificación. Revisa el servicio de correo e inténtalo de nuevo.';
-      return res.status(503).json({ error: message });
+    if (REQUIRE_EMAIL_VERIFICATION) {
+      try { await sendVerificationEmail(req, user); }
+      catch (e) {
+        const message = e.message === 'EMAIL_PROVIDER_NOT_CONFIGURED'
+          ? 'El envío de correo aún no está configurado. Configura RESEND_API_KEY y EMAIL_FROM en Render.'
+          : 'No se pudo enviar el correo de verificación. Revisa el servicio de correo e inténtalo de nuevo.';
+        return res.status(503).json({ error: message });
+      }
+    } else if (!user.email_verified) {
+      // Demo mode: allow pending accounts to sign in without email delivery.
+      q.verifyUser.run(user.id);
     }
-    res.status(201).json({ ok: true });
+    res.status(201).json({ ok: true, verificationRequired: REQUIRE_EMAIL_VERIFICATION });
   } catch (e) { next(e); }
 });
 
