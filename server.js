@@ -79,14 +79,15 @@ const q = {
   delReset: db.prepare('DELETE FROM password_resets WHERE user_id=?'),
   changePassword: db.prepare('UPDATE users SET password_hash=?,auth_version=auth_version+1 WHERE id=?'),
 };
-// Keep the email lookup short-lived. A stale/finalized cached StatementSync
-// caused registration requests to fail on the hosted Node runtime.
+// Rebuild the cached lookup if Node reports that its SQLite statement was finalized.
+let byEmailStatement = db.prepare('SELECT * FROM users WHERE email = ?');
 function getUserByEmail(email) {
-  const statement = db.prepare('SELECT * FROM users WHERE email = ?');
   try {
-    return statement.get(email);
-  } finally {
-    statement[Symbol.dispose]();
+    return byEmailStatement.get(email);
+  } catch (error) {
+    if (!/statement has been finalized/i.test(String(error.message))) throw error;
+    byEmailStatement = db.prepare('SELECT * FROM users WHERE email = ?');
+    return byEmailStatement.get(email);
   }
 }
 
