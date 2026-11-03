@@ -439,9 +439,12 @@ async function hacerRegistro(){
   if(pass!==pass2){errEl.textContent='Las contraseñas no coinciden.';errEl.style.display='block';return;}
   const btn=document.getElementById('reg-submit');if(btn)btn.disabled=true;
   try{
-    await apiJSON('/api/register',{method:'POST',body:JSON.stringify({nombre,apellido,email,password:pass})});
+    const registration=await apiJSON('/api/register',{method:'POST',body:JSON.stringify({nombre,apellido,email,password:pass})});
     ['reg-nombre','reg-apellido','reg-email','reg-pass','reg-pass2'].forEach(id=>document.getElementById(id).value='');
-    mostrarAuth('success');
+    if(registration.verificationRequired===false){
+      const {user}=await apiJSON('/api/login',{method:'POST',body:JSON.stringify({email,password:pass})});
+      await iniciarSesionComo(user);
+    } else mostrarAuth('success');
   }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
   if(btn)btn.disabled=false;
 }
