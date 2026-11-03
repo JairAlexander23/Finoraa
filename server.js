@@ -19,6 +19,11 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || '';
 const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/+$/, '');
 const REQUIRE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
+const EMAIL_VERIFICATION_REQUIRED_FOR = new Set(
+  (process.env.EMAIL_VERIFICATION_REQUIRED_FOR || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean)
+);
+const requiresEmailVerification = (email) =>
+  REQUIRE_EMAIL_VERIFICATION || EMAIL_VERIFICATION_REQUIRED_FOR.has(email);
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'finora.db');
 let SECRET = process.env.JWT_SECRET;
 if (!SECRET) {
@@ -172,12 +177,13 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo electrónico válido.' });
     if (password.length < 8 || Buffer.byteLength(password) > 72)
       return res.status(400).json({ error: 'La contraseña debe tener entre 8 y 72 caracteres.' });
+    const verificationRequired = requiresEmailVerification(email);
     let user = getUserByEmail(email);
     if (user?.email_verified) return res.status(409).json({ error: 'Ya existe una cuenta verificada con ese correo.' });
     if (!user) {
       const hash = await bcrypt.hash(password, 12);
       try {
-        const verified = REQUIRE_EMAIL_VERIFICATION ? 0 : 1;
+        const verified = verificationRequired ? 0 : 1;
         const result = q.insert.run(email, nombre, apellido, hash, verified);
         user = q.byId.get(Number(result.lastInsertRowid));
       } catch (e) {
@@ -186,7 +192,7 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
         throw e;
       }
     }
-    if (REQUIRE_EMAIL_VERIFICATION) {
+    if (verificationRequired) {
       try { await sendVerificationEmail(req, user); }
       catch (e) {
         const message = e.message === 'EMAIL_PROVIDER_NOT_CONFIGURED'
@@ -198,7 +204,7 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
       // Demo mode: allow pending accounts to sign in without email delivery.
       q.verifyUser.run(user.id);
     }
-    res.status(201).json({ ok: true, verificationRequired: REQUIRE_EMAIL_VERIFICATION });
+    res.status(201).json({ ok: true, verificationRequired });
   } catch (e) { next(e); }
 });
 
