@@ -26,7 +26,7 @@ input,select{font-family:inherit;}
 .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;margin-right:16px;color:var(--text);flex-shrink:0;cursor:pointer;transition:.2s;}
 .brand:hover{opacity:.78;}
 .brand:active{transform:scale(.96);}
-.brand svg{flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(79,63,240,.25));}
+.brand .brand-logo{width:30px;height:30px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(79,63,240,.25));}
 .sidebar{width:92px;background:linear-gradient(165deg,var(--navy),var(--navy2));display:flex;flex-direction:column;align-items:center;flex-shrink:0;position:sticky;top:16px;height:calc(100vh - 32px);margin:16px 0 16px 16px;padding:20px 8px;border-radius:var(--radius-lg);box-shadow:0 24px 50px -18px rgba(33,28,77,.5);}
 .nav{display:flex;flex-direction:column;gap:8px;width:100%;align-items:stretch;}
 .nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:100%;background:none;border:none;color:rgba(255,255,255,.62);padding:11px 3px;border-radius:15px;font-size:10px;font-weight:600;text-align:center;transition:.25s cubic-bezier(.4,0,.2,1);position:relative;}
@@ -210,6 +210,7 @@ tr:last-child td{border-bottom:none;}
 .auth-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));}
 .auth-card{background:var(--card);border-radius:20px;padding:34px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:fadeIn .3s ease;}
 .auth-logo{display:flex;align-items:center;justify-content:center;gap:8px;font-size:26px;font-weight:800;color:var(--teal-d);margin-bottom:22px;}
+.auth-logo .brand-logo{width:42px;height:42px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 3px 8px rgba(79,63,240,.22));}
 .auth-view{display:none;}
 .auth-view.active{display:block;animation:fadeIn .25s ease;}
 .auth-view h2{margin:0 0 6px;font-size:20px;text-align:center;}
